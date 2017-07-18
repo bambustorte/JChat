@@ -14,6 +14,7 @@ public class Client implements Runnable {
 	private Message newMessage;
 	private Scanner scan;
 	private SimpleDateFormat time;
+	private int id;
 
 	public Client() {
 		try {
@@ -26,31 +27,37 @@ public class Client implements Runnable {
 			System.err.println("failed to initialize client");
 			e.printStackTrace();
 		}
+		
+		id = getMessage().getReceiver();
 
 		System.out.print("Enter username: ");
 		while ((userName = scan.nextLine()) == null)
 			;
 		if (userName == "")
 			userName = "anon";
+		sendMessage(userName);
 	}
-
+	
 	public void run() {
-		sendMessage("has connected", 0);
+		sendMessage("welcome " + userName + "! Your ID is " + this.id, id);
 		Thread gM = new Thread(new Runnable() {
 			public void run() {
 				while (true) {
 					Message msg = getMessage();
 					System.out.println(
 							"\n[" + time.format(msg.getTime()) + "]" + " <" + msg.getName() + "> " + msg.getContent());
-					System.out.print("=> ");
+					System.out.print("$ ");
 				}
 			}
 		});
 		gM.start();
 
 		while (true) {
+			//String text = null;
+			//while((scan.nextLine()) == null);
+			//sendMessage(text);
 			sendMessage(scan.nextLine());
-			System.out.print("=> ");
+			System.out.print("$ ");
 		}
 	}
 
@@ -82,8 +89,9 @@ public class Client implements Runnable {
 			newMessage = (Message) clientInStream.readObject();
 			return newMessage;
 		} catch (Exception e) {
-			System.err.println("could not read message");
+			System.err.println("could not read message, connection dead");
 			e.printStackTrace();
+			System.exit(5);
 		}
 		return null;
 	}

@@ -81,7 +81,6 @@ public class Server implements Runnable {
 
 		public ClientThread(int id, String userName, Socket socket) {
 			this.clientId = id;
-			this.userName = userName;
 			this.socket = socket;
 			try {
 				clientOutStream = new ObjectOutputStream(this.socket.getOutputStream());
@@ -90,9 +89,21 @@ public class Server implements Runnable {
 				System.err.println("failed to get in out streams for client");
 				e.printStackTrace();
 			}
+
+			this.userName = userName;
 		}
 
 		public void run() {
+			
+			writeToClients(new Message(1, this.userName, "", clientId), clientId);
+
+			try {
+				Message nameMessage = (Message) clientInStream.readObject();
+				this.userName = nameMessage.getName();
+				System.out.println(this.userName);
+			} catch (Exception e) {
+
+			}
 			while (running)
 				listenForMessages();
 		}
@@ -103,13 +114,14 @@ public class Server implements Runnable {
 				messages.add(msg);
 				System.out.println(
 						"[" + time.format(msg.getTime()) + "]" + " <" + msg.getName() + "> " + msg.getContent());
-				if (msg.getReceiver() == -1)
+				if (msg.getReceiver() == -1) {
 					writeToClients(msg);
-				else
+				} else {
 					writeToClients(msg, msg.getReceiver());
+				}
 			} catch (ClassNotFoundException | IOException e) {
-				System.err.println("server cannot read object");
-				e.printStackTrace();
+				System.err.println("server cannot read object, maybe clients dead");
+				//e.printStackTrace();
 				running = false;
 			}
 		}
