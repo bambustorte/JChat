@@ -1,6 +1,21 @@
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-
+/**
+ * 
+ * @author max
+ * 
+ * Message class representing message objects.
+ * 
+ * Type can be one of the following:
+ * 0 => broadcast message
+ * 1 => message to just the given receiver
+ * 2 => message to all except given receiver
+ * 3 => message to server
+ * 4 => message to client
+ * 5 => message is a command
+ *
+ */
 public class Message implements Serializable {
 	private static final long serialVersionUID = 42L;
 
@@ -9,14 +24,30 @@ public class Message implements Serializable {
 	private String name;
 	private String content;
 	private Date time;
+	private SimpleDateFormat sdf;
+	private int sender;
 	
 	public Message(int type, String name, String content, int receiver) {
+		this(type, name, content, receiver, -1);
+	}
+	
+	public Message(int type, String name, String content, int receiver, int sender) {
 		super();
 		this.receiver = receiver;
 		this.type = type;
 		this.name = name;
 		this.content = content;
 		this.time = new Date();
+		this.sender = sender;
+		this.sdf = new SimpleDateFormat("HH:mm:ss");
+	}
+
+	public int getSender() {
+		return sender;
+	}
+
+	public void setSender(int sender) {
+		this.sender = sender;
 	}
 
 	public int getReceiver() {
@@ -55,6 +86,11 @@ public class Message implements Serializable {
 		return serialVersionUID;
 	}
 	
-	
+	public String toString() {
+		return "[" + sdf.format(this.getTime()) + "]" + " <" + this.getName() + "> " + this.getContent();
+		//System.out.println("\n[" + time.format(msg.getTime()) + "]" + " <" + msg.getName() + "> " + msg.getContent());
+		
+		//return null;
+	}
 	
 }
