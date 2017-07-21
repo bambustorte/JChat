@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class Client implements Runnable {
 
@@ -38,11 +39,11 @@ public class Client implements Runnable {
 	}
 
 	public void run() {
-		try {
-			Thread.sleep(500);
-		} catch (Exception e) {
-
-		}
+		// try {
+		// Thread.sleep(500);
+		// } catch (Exception e) {
+		//
+		// }
 		unicastMessage("Welcome " + userName + "! Your ID is " + this.id, id);
 		unicastMessage("To get help, type /help", id);
 
@@ -59,15 +60,19 @@ public class Client implements Runnable {
 		String input;
 		while (true) {
 			input = scan.nextLine();
+			if (!input.equals("")) {
+				if (input.charAt(0) == '/') {
+					commandMessage(input);
+				} else if (Pattern.compile("@\\d+ .+").matcher(input).matches()) {
+					
+					//System.out.println("match!");
 
-			if (input.charAt(0) == '/') {
-				commandMessage(input);
-			} else if (input.charAt(0) == '@') {
-				int rec = Integer.parseInt(input.substring(1, input.indexOf(" ")));
-				String cont = input.substring(input.indexOf(" ") + 1);
-				unicastMessage(cont, rec);
-			} else {
-				broadcastMessage(input);
+					int rec = Integer.parseInt(input.substring(1, input.indexOf(" ")));
+					String cont = input.substring(input.indexOf(" ") + 1);
+					unicastMessage(cont, rec);
+				} else {
+					broadcastMessage(input);
+				}
 			}
 			System.out.print("$ ");
 		}

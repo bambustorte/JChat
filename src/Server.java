@@ -49,6 +49,15 @@ public class Server implements Runnable {
 			}
 			break;
 		case 1: // unicast
+			if (message.getReceiver() > id) {
+				ClientThread clientRetour = clients.get(message.getSender());
+				if (clientRetour == null)
+					return;
+				if (!clientRetour.sendMessage(new Message(1, "server", "Client not available", message.getSender()))) {
+					remove(message.getSender(), clientRetour);
+				}
+				break;
+			}
 			client = clients.get(message.getReceiver());
 			if (client == null) {
 				ClientThread clientRetour = clients.get(message.getSender());
@@ -142,10 +151,10 @@ public class Server implements Runnable {
 			try {
 				Message nameMessage = (Message) clientInStream.readObject();
 				this.userName = nameMessage.getName();
-				//System.out.println(this.userName);
+				// System.out.println(this.userName);
 				sendMessage((Message) clientInStream.readObject());
 				sendMessage((Message) clientInStream.readObject());
-				
+
 			} catch (Exception e) {
 
 			}
@@ -159,7 +168,7 @@ public class Server implements Runnable {
 				msg = (Message) clientInStream.readObject();
 				messages.add(msg);
 			} catch (ClassNotFoundException | IOException e) {
-				//System.err.println("server cannot read object, maybe clients dead");
+				// System.err.println("server cannot read object, maybe clients dead");
 				remove(this.clientId, this);
 				// e.printStackTrace();
 				running = false;
@@ -204,22 +213,18 @@ public class Server implements Runnable {
 			}
 			return true;
 		}
-		
+
 		private void doCommand(Message msg) {
 			String command = msg.getContent().substring(1);
 			Message answer;
-			
-			switch(command) {
+
+			switch (command) {
+			case "":
 			case "help":
-				String help = "\n\n_Help_message_\n"
-						+ "To execute commands write '/COMMAND' "
-						+ "where COMMAND is one of the following:\n"
-						+ "- help  => show this help\n"
-						+ "- users => display users\n"
-						+ "\n"
-						+ "You can PM others with '@ID' where ID "
-						+ "is the id of the client you want to PM. "
-						+ "To find out, what id the client has, "
+				String help = "\n\n_Help_message_\n" + "To execute commands write '/COMMAND' "
+						+ "where COMMAND is one of the following:\n" + "- help  => show this help\n"
+						+ "- users => display users\n" + "\n" + "You can PM others with '@ID' where ID "
+						+ "is the id of the client you want to PM. " + "To find out, what id the client has, "
 						+ "use the command /users.";
 				answer = new Message(4, "server", help, this.clientId);
 				writeToClients(answer);
@@ -227,7 +232,7 @@ public class Server implements Runnable {
 			case "users":
 				String users = "Showing the users currently online:\n";
 				for (ClientThread clientThread : clients) {
-					if(clientThread == null)
+					if (clientThread == null)
 						continue;
 					users += "\n" + clientThread.clientId + " is " + clientThread.userName;
 				}
