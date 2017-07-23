@@ -1,9 +1,24 @@
+package net;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+
+/**
+ * 
+ * @author max This server class is a singleton. It runs as one main Thread.
+ *         accepting This Thread accepts connections from clients and creates
+ *         one separate client Thread for each new connection.
+ * 
+ *         The client Threads are stored in an ArrayList and dead connections
+ *         are marked as null objects in this list.
+ * 
+ *         Every client thread has an unique id.
+ * 
+ */
 
 public class Server implements Runnable {
 
@@ -13,6 +28,7 @@ public class Server implements Runnable {
 	private static Server instance = null;
 	private int id;
 
+	// private constructor
 	private Server(int port) {
 		messages = new ArrayList<Message>();
 		clients = new ArrayList<ClientThread>();
@@ -27,6 +43,7 @@ public class Server implements Runnable {
 		}
 	}
 
+	// only way to create an instance of this object
 	public static Server getInstance(int port) {
 		if (instance == null) {
 			instance = new Server(port);
@@ -34,6 +51,7 @@ public class Server implements Runnable {
 		return instance;
 	}
 
+	// write given message to clients with different logics
 	private synchronized void writeToClients(Message message) {
 		ClientThread client;
 		switch (message.getType()) {
@@ -100,12 +118,16 @@ public class Server implements Runnable {
 		}
 	}
 
+	// replaces client with "null" in the list at index i and informs the other
+	// clients
 	public void remove(int i, ClientThread client) {
 		clients.add(i, null);
 		clients.remove(i + 1);
 		System.err.println("removed " + client.userName + " with id " + client.clientId);
+		writeToClients(new Message(0, client.userName, "has gone offline.", -1, 0));
 	}
 
+	// thread for accepting connections and creating ClientThreads
 	public void run() {
 		System.out.println("Server started successfully!");
 		while (true) {
@@ -122,6 +144,12 @@ public class Server implements Runnable {
 		}
 	}
 
+	/**
+	 * each client gets a client thread with an unique id and socket
+	 * 
+	 * @author max
+	 * 
+	 */
 	class ClientThread extends Thread {
 
 		private int clientId;
@@ -144,65 +172,72 @@ public class Server implements Runnable {
 		}
 
 		public void run() {
-
 			// tell the client its id
 			writeToClients(new Message(4, "server", "", clientId, 0));
 
 			try {
+				// get the name of the user
 				Message nameMessage = (Message) clientInStream.readObject();
 				this.userName = nameMessage.getName();
-				// System.out.println(this.userName);
+
+				// get the "welcome" and "has come online" messages
 				sendMessage((Message) clientInStream.readObject());
 				sendMessage((Message) clientInStream.readObject());
 
 			} catch (Exception e) {
-
 			}
+
+			// then read messages forever
 			while (running)
 				listenForMessages();
 		}
 
+		// listen for one message
 		private void listenForMessages() {
 			Message msg = null;
 			try {
+				// read object blocks the thread until it reads something
 				msg = (Message) clientInStream.readObject();
 				messages.add(msg);
 			} catch (ClassNotFoundException | IOException e) {
-				// System.err.println("server cannot read object, maybe clients dead");
+				// if the method couldn't read anything, remove the client, its probably dead
 				remove(this.clientId, this);
 				// e.printStackTrace();
+				// and stop the thread
 				running = false;
 				return;
 			}
 
+			// process different message types
 			switch (msg.getType()) {
-			case 0:
+			case 0:// broadcast
 				System.out.println(msg);
 				writeToClients(msg);
 				break;
-			case 1:
+			case 1:// unicast
 				System.out.println("ucast: " + msg);
 				writeToClients(msg);
 				break;
-			case 2:
+			case 2:// multicast
 				System.out.println("mcast: " + msg);
 				writeToClients(msg);
 				break;
-			case 3:
+			case 3:// server message
 				System.out.println("msg for me!" + msg);
 				break;
-			case 4:
-				System.out.println("i shouldnt be receiving this");
+			case 4:// client message
+				System.err.println("i shouldnt be receiving this");
 				break;
-			case 5:
+			case 5:// command message
 				doCommand(msg);
 				break;
 			default:
-				System.out.println("fail in determining message type");
+				System.err.println("fail in determining message type:\n" + msg);
 				break;
 			}
 		}
 
+		// send messages as objects
 		private boolean sendMessage(Message message) {
 			try {
 				clientOutStream.writeObject(message);
@@ -214,12 +249,17 @@ public class Server implements Runnable {
 			return true;
 		}
 
+		// command processing routine
 		private void doCommand(Message msg) {
 			String command = msg.getContent().substring(1);
 			Message answer;
 
+			// command switch
 			switch (command) {
+			// if command was empty ("/")
 			case "":
+				// or if command was "/help"
+				// show help message
 			case "help":
 				String help = "\n\n_Help_message_\n" + "To execute commands write '/COMMAND' "
 						+ "where COMMAND is one of the following:\n" + "- help  => show this help\n"
@@ -229,12 +269,15 @@ public class Server implements Runnable {
 				answer = new Message(4, "server", help, this.clientId);
 				writeToClients(answer);
 				break;
+			//generate user list if command was "/users"
 			case "users":
 				String users = "Showing the users currently online:\n";
 				for (ClientThread clientThread : clients) {
 					if (clientThread == null)
 						continue;
 					users += "\n" + clientThread.clientId + " is " + clientThread.userName;
+					if (clientThread.clientId == msg.getSender())
+						users += "(<== you)";
 				}
 				answer = new Message(4, "server", users, this.clientId);
 				writeToClients(answer);

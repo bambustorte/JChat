@@ -1,20 +1,29 @@
+package net;
+
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 /**
+ * Message class representing message objects.
+ * 
+ * 
+ * Type can be one of the following:
+ * 
+ * 0 => broadcast message
+ * 
+ * 1 => message to just the given receiver
+ * 
+ * 2 => message to all except given receiver
+ * 
+ * 3 => message to server
+ * 
+ * 4 => message to client
+ * 
+ * 5 => message is a command
  * 
  * @author max
  * 
- * Message class representing message objects.
- * 
- * Type can be one of the following:
- * 0 => broadcast message
- * 1 => message to just the given receiver
- * 2 => message to all except given receiver
- * 3 => message to server
- * 4 => message to client
- * 5 => message is a command
- *
  */
 public class Message implements Serializable {
 	private static final long serialVersionUID = 42L;
@@ -26,11 +35,12 @@ public class Message implements Serializable {
 	private Date time;
 	private SimpleDateFormat sdf;
 	private int sender;
+
 	
 	public Message(int type, String name, String content, int receiver) {
 		this(type, name, content, receiver, -1);
 	}
-	
+
 	public Message(int type, String name, String content, int receiver, int sender) {
 		super();
 		this.receiver = receiver;
@@ -61,36 +71,41 @@ public class Message implements Serializable {
 	public int getType() {
 		return type;
 	}
+
 	public void setType(int type) {
 		this.type = type;
 	}
+
 	public String getName() {
 		return name;
 	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
+
 	public String getContent() {
 		return content;
 	}
+
 	public void setContent(String content) {
 		this.content = content;
 	}
+
 	public Date getTime() {
 		return time;
 	}
+
 	public void setTime(Date time) {
 		this.time = time;
 	}
+
 	public static long getSerialversionuid() {
 		return serialVersionUID;
 	}
-	
+
 	public String toString() {
 		return "[" + sdf.format(this.getTime()) + "]" + " <" + this.getName() + "> " + this.getContent();
-		//System.out.println("\n[" + time.format(msg.getTime()) + "]" + " <" + msg.getName() + "> " + msg.getContent());
-		
-		//return null;
 	}
-	
+
 }
