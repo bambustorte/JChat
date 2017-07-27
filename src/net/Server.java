@@ -282,6 +282,10 @@ public class Server implements Runnable {
 				answer = new Message(4, "server", users, this.clientId);
 				writeToClients(answer);
 				break;
+			case "exit":
+			case "stop":
+				writeToClients(new Message(4, "server", "exit", msg.getSender(), 0));
+				break;
 			}
 		}
 	}
