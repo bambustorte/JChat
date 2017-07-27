@@ -2,6 +2,7 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -26,6 +27,9 @@ public class ClientGUI extends JFrame {
 	private JTextField textFieldMessage;
 	Client client;
 	private boolean firstInput = true;
+	Font font = new Font("sans-serif", 0, 20);
+	
+	
 
 	public ClientGUI(Client client) {
 		this.client = client;
@@ -53,6 +57,7 @@ public class ClientGUI extends JFrame {
 		textAreaMessages.setEditable(false);
 		textAreaMessages.setLineWrap(true);
 		textAreaMessages.setWrapStyleWord(true);
+		textAreaMessages.setFont(font);
 
 		// autoscroll
 		DefaultCaret caret = (DefaultCaret) textAreaMessages.getCaret();
